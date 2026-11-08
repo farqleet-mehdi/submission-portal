@@ -34,8 +34,8 @@ def validate_submission(name, reg_no, title, url):
     errors = []
     if not name.strip():
         errors.append("Name is required.")
-    if not reg_no.strip():
-        errors.append("Registration number is required.")
+    #if not reg_no.strip():
+       # errors.append("Registration number is required.")
     if not title.strip():
         errors.append("Assignment title is required.")
     if not url.strip():
