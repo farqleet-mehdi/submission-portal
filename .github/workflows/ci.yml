@@ -1,16 +1,20 @@
-   name: CI
+name: CI
 
-   on: push
+on: push
 
-   jobs:
-     test:
-       runs-on: self-hosted
-       steps:
-         - name: Get the pushed code
-           uses: actions/checkout@v4
+jobs:
+  test:
+    runs-on: self-hosted
+    steps:
+      - name: Get the pushed code
+        uses: actions/checkout@v4
 
-         - name: Install dependencies
-           run: python -m pip install -r requirements.txt
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
 
-         - name: Run tests
-           run: python -m pytest -v
+      - name: Run tests
+        run: python -m pytest -v --junitxml=results.xml
+
+      - name: Send report to local receiver
+        if: always()
+        run: python send_report.py
