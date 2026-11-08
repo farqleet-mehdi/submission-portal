@@ -19,6 +19,14 @@ jobs:
         if: always()
         run: python send_report.py
 
+      - name: Email the report
+        if: always()
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        run: python send_email.py
+
   deploy:
     needs: test
     if: github.ref == 'refs/heads/main'
