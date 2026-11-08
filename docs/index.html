@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assignment Submission Portal (Demo)</title>
+  <style>
+    body { font-family: sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    .note { background: #eef4ff; border: 1px solid #b6ccf5; padding: .5rem 1rem; }
+    label { display: block; margin-top: .8rem; font-weight: bold; }
+    input { width: 100%; padding: .4rem; box-sizing: border-box; }
+    button { margin-top: 1rem; padding: .5rem 1.2rem; }
+    .errors { background: #fde8e8; border: 1px solid #e0a0a0; padding: .5rem 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: .4rem; text-align: left; }
+    [hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Assignment Submission Portal</h1>
+  <p class="note">
+    Static demo of the portal. It follows the same validation rules as the real
+    Flask app, but submissions are saved only in this browser.
+  </p>
+
+  <div id="errors" class="errors" hidden><ul id="error-list"></ul></div>
+
+  <form id="form" novalidate>
+    <label>Name <input id="name"></label>
+    <label>Registration number <input id="reg_no"></label>
+    <label>Assignment title <input id="title"></label>
+    <label>Submission URL <input id="url"></label>
+    <button type="submit">Submit</button>
+  </form>
+
+  <h2>Saved submissions</h2>
+  <p id="empty">No submissions yet.</p>
+  <table id="submission-list" hidden>
+    <thead><tr><th>Name</th><th>Reg. no.</th><th>Assignment</th><th>URL</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <script>
+    // ---- validation (same rules as app.py) ----
+    function isValidUrl(url) {
+      if (!url || url.indexOf(" ") !== -1) return false;
+      var parsed;
+      try { parsed = new URL(url); } catch (e) { return false; }
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
+      var host = parsed.hostname;
+      return host.indexOf(".") !== -1 && host[0] !== "." && host[host.length - 1] !== ".";
+    }
+
+    function validateSubmission(s) {
+      var errors = [];
+      if (!s.name.trim()) errors.push("Name is required.");
+      if (!s.reg_no.trim()) errors.push("Registration number is required.");
+      if (!s.title.trim()) errors.push("Assignment title is required.");
+      if (!s.url.trim()) errors.push("Submission URL is required.");
+      else if (!isValidUrl(s.url.trim())) errors.push("Submission URL is not a valid http(s) URL.");
+      return errors;
+    }
+
+    // ---- page code ----
+    var STORAGE_KEY = "submissions";
+
+    function loadSubmissions() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+      catch (e) { return []; }
+    }
+
+    function saveSubmissions(list) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
+    }
+
+    function showErrors(errors) {
+      var box = document.getElementById("errors");
+      var list = document.getElementById("error-list");
+      list.innerHTML = "";
+      errors.forEach(function (message) {
+        var li = document.createElement("li");
+        li.textContent = message;
+        list.appendChild(li);
+      });
+      box.hidden = errors.length === 0;
+    }
+
+    function cell(text) {
+      var td = document.createElement("td");
+      td.textContent = text;
+      return td;
+    }
+
+    function renderList() {
+      var submissions = loadSubmissions();
+      var rows = document.getElementById("rows");
+      rows.innerHTML = "";
+      submissions.forEach(function (s) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell(s.name));
+        tr.appendChild(cell(s.reg_no));
+        tr.appendChild(cell(s.title));
+        var td = document.createElement("td");
+        var a = document.createElement("a");
+        a.href = s.url;
+        a.textContent = s.url;
+        td.appendChild(a);
+        tr.appendChild(td);
+        rows.appendChild(tr);
+      });
+      document.getElementById("submission-list").hidden = submissions.length === 0;
+      document.getElementById("empty").hidden = submissions.length !== 0;
+    }
+
+    document.getElementById("form").addEventListener("submit", function (event) {
+      event.preventDefault();
+      var submission = {
+        name: document.getElementById("name").value,
+        reg_no: document.getElementById("reg_no").value,
+        title: document.getElementById("title").value,
+        url: document.getElementById("url").value
+      };
+      var errors = validateSubmission(submission);
+      showErrors(errors);
+      if (errors.length > 0) return;   // rejected: nothing is saved
+
+      var list = loadSubmissions();
+      list.push({
+        name: submission.name.trim(),
+        reg_no: submission.reg_no.trim(),
+        title: submission.title.trim(),
+        url: submission.url.trim()
+      });
+      saveSubmissions(list);
+      document.getElementById("form").reset();
+      renderList();
+    });
+
+    renderList();
+  </script>
+</body>
+</html>
